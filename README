@@ -1,0 +1,43 @@
+/****************************************************************
+ * jQuery Youtube plugin
+ ****************************************************************
+ * Class for loading Youtube videos and images
+ *
+ * http://github.com/kilhage/jQuery-Plugins/tree/master/youtube/
+ * By 2010 Emil Kilhage
+ * @version: 1.0
+ * @date: 2010-10-11 21:29
+ * ***************************************************************
+ * Usage examples:
+ *---------------------------------------------------------------
+ * Html:
+ * @param href: youtube id
+ * @param alt: json encoded string with the width and height
+ * <a class="youtube" href="47piCmAB0s4" alt="{'width':'300','height':'240'}"></a>
+ *
+ * Javascript:
+ * @param type: The type of element you want to get
+ * $.fn.youtube(type);
+ *
+ * To load the image:
+ * $('.youtube').youtube('image');
+ *
+ * To load the video:
+ * $('.youtube').youtube('video', config);
+ *---------------------------------------------------------------
+ * The global object:
+ *
+ * $.youtube.config();
+ * Will return the current config
+ *
+ * $.youtube.config({
+ *  autohide: true
+ * });
+ * Will replace the default value of the autohide parameter
+ *
+ * $.youtube.config({
+ *  autohide: true
+ * }, true);
+ * Will replace the current config with the config object that you pass
+ *
+ **************************************************************
