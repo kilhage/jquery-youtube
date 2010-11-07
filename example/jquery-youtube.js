@@ -3,7 +3,7 @@
  ****************************************************************
  * Class for loading Youtube videos and images
  *
- * http://github.com/kilhage/jQuery-Plugins/tree/master/youtube/
+ * https://github.com/kilhage/jquery-youtube
  * @creator Emil Kilhage, 2010
  * @version: 1.0
  * @date: 2010-11-07 23:05
