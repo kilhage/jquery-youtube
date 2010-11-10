@@ -6,10 +6,10 @@
  * https://github.com/kilhage/jquery-youtube
  * @creator Emil Kilhage, 2010
  * @version: 1.0
- * @date: 2010-11-07 23:05
+ * @date: 2010-11-10 01:27:00
  * MIT Licensed.
  * ***************************************************************
- * For usage examples, see readme
+ * For usage examples, see readme/examples
  ****************************************************************/
 (function( $ ) {
 "use strict";
@@ -335,7 +335,7 @@ var YouTubeBase = Base.extend({
   /* * *
    * Internal log function, used for debuging
    *
-   * @param <mixed> v:
+   * @param {mixed} v:
    *   boolean: set if the internal log function should be enabled or not, you can also enter enable or disable to set this value
    *   string: log a message using the internal log function
    *   int: same as string
