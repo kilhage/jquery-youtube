@@ -6,7 +6,7 @@
  * https://github.com/kilhage/jquery-youtube
  * @creator Emil Kilhage, 2010
  * @version: 1.0
- * @date: 2010-11-10 01:27:00
+ * @date: 2010-11-14 04:33:30
  * MIT Licensed.
  * ***************************************************************
  * For usage examples, see readme/examples
@@ -14,70 +14,38 @@
 (function( $ ) {
 "use strict";
 
-var initializing      = false,
-    fnTest            = /xyz/.test(function(){xyz;}) ? /\b__super\b/ : /.*/,
-    Base              = function(){},
-    IMAGE             = 'image',
-    VIDEO             = 'video',
-    IFRAME            = 'iframe',
-    OBJECT            = 'object',
-    STRING            = 'string',
-    BOOL              = 'boolean',
-    NUMBER            = 'number',
-    FUNCTION          = 'function',
-    defaultEnableLog  = false,
-    availableOptions  = [IMAGE, VIDEO],
-    defaultConfig     = {
-      autohide:       '0',
-      autoplay:       '0',
-      enablejsapi:    '0',
-      version:        '4',
-      hd:             '1',
-      disablekb:      '0',
-      showinfo:       '0'
-    };
-
-Base.extend = function(prop) {
-  var __super = this.prototype;
-  initializing = true;
-  var proto = new this();
-  initializing = false;
-  for (var name in prop) {
-    if (name) {
-      proto[name] = typeof prop[name] == FUNCTION &&
-        typeof __super[name] == FUNCTION && fnTest.test(prop[name]) ?
-        (function(name, fn) {
-            return function() {
-              var tmp = this.__super;
-              this.__super = __super[name];
-              var ret = fn.apply(this, arguments);
-              this.__super = tmp;
-              return ret;
-            };
-        })(name, prop[name]) : prop[name];
-    }
-  }
-  function Class() {
-    if ( !initializing && this.__constructor ) {
-      this.__constructor.apply(this, arguments);
-    }
-  }
-  Class.prototype = proto;
-  Class.constructor = Class;
-  Class.extend = arguments.callee;
-  return Class;
+var IMAGE         = 'image',
+VIDEO             = 'video',
+IFRAME            = 'iframe',
+OBJECT            = 'object',
+STRING            = 'string',
+BOOL              = 'boolean',
+NUMBER            = 'number',
+FUNCTION          = 'function',
+defaultEnableLog  = false,
+availableOptions  = [IMAGE, VIDEO],
+defaultConfig     = {
+  autohide:       '0',
+  autoplay:       '0',
+  enablejsapi:    '0',
+  version:        '4',
+  hd:             '1',
+  disablekb:      '0',
+  showinfo:       '0'
 };
 
-var log = function(m)
-{
-  if($.youtube.log())
-  {
-    console.log('jQuery Youtube :: '+m);
+function log(m) {
+  if( $.youtube.log() ) {
+    console.log( 'jQuery Youtube :: ' + m );
   }
   return null;
-};
+}
 
-var Youtube = Base.extend({
+function Youtube() {
+  this.__init.apply(this, arguments);
+}
+
+Youtube.prototype = {
 
   videoType:    OBJECT,
   iframeBorder: '0',
@@ -89,7 +57,7 @@ var Youtube = Base.extend({
     data: 'alt'
   },
 
-  __constructor: function( elements, type, config )
+  __init: function( elements, type, config )
   {
     //get config from the global youtube object
     this.config = $.youtube.config();
@@ -231,16 +199,14 @@ var Youtube = Base.extend({
     }
   }
 
-});
+};
 
-var YouTubeBase = Base.extend({
+function YouTubeBase(){}
+
+YouTubeBase.prototype = {
 
   _config: defaultConfig,
   _log: defaultEnableLog,
-
-  __constructor: function(){
-
-  },
 
   /* * *
    * @param <string> id           : identifier
@@ -378,9 +344,9 @@ var YouTubeBase = Base.extend({
     return null;
   }
 
-});
+};
 
-$.fn.youtube = function( type, config ){
+$.fn.youtube = function( type, config ) {
   //if no elements, return
   if( this.length < 1 )
   {

@@ -9,11 +9,13 @@
     </title>
 
     <script language="Javascript" type="text/javascript" src="http://code.jquery.com/jquery.js"></script>
-    <script language="Javascript" type="text/javascript" src="jquery-youtube.js"></script>
+    <link type="text/css" rel="stylesheet" href="http://syntaxhighlighter.googlecode.com/svn-history/r86/trunk/Styles/SyntaxHighlighter.css"></link>
+    <script language="javascript" src="http://syntaxhighlighter.googlecode.com/svn-history/r86/trunk/Scripts/shCore.js"></script>
+    <script language="javascript" src="http://syntaxhighlighter.googlecode.com/svn-history/r86/trunk/Scripts/shBrushJScript.js"></script>
+    <script language="Javascript" type="text/javascript" src="jquery-youtube.min.js"></script>
     <style type="text/css">
-      div {
+      .main {
         width: 800px;
-        background-color: lavender;
         margin-left: auto;
         margin-right: auto;
         padding-bottom: 30px;
@@ -28,7 +30,6 @@
         margin-bottom: 30px;
         padding: 20px;
         height: auto;
-        background-color: gainsboro;
       }
 
       h3 {
@@ -42,15 +43,11 @@
         margin-bottom: 20px;
       }
 
-      pre {
-        background-color: #fff;
-        padding: 10px;
-      }
     </style>
   </head>
   <body>
 
-    <div>
+    <div class="main">
       
       <center>
         <h1>
@@ -63,20 +60,21 @@
         <h3>
           Code:
         </h3>
-<pre>
-Javascript:
-&#60;script&#62;
-  $('.youtube_1').youtube('image').click(function(){
-    $(this).youtube('video', {
-      autohide: true,
-      autoplay: true,
-      showinfo: true
-    });
+<pre name="code" class="jscript">
+//Javascript:
+$('.youtube_1').youtube('image').click(function(){
+  $(this).youtube('video', {
+    autohide: true,
+    autoplay: true,
+    showinfo: true
   });
-&#60;/script&#62;
+});
 
-Html:
-&#60;a id="youtube_1" href="gO4ygd0CaPo" alt='{"width":"400","height":"300"}'&#62;&#60;/a&#62;
+/*
+ * Html:
+ * &#60;a id="youtube_1" href="gO4ygd0CaPo" alt='{"width":"400","height":"300"}'&#62;&#60;/a&#62;
+ */
+ 
 </pre>
         <br><br>
         
@@ -100,18 +98,21 @@ Html:
         <h3>
           Code:
         </h3>
-        <pre>
-Javascript:
-&#60;script&#62;$('#youtube_2').youtube('video');&#60;/script&#62;
+        <pre name="code" class="jscript">
+//Javascript:
+$('#youtube_2').youtube('video');
 
-Html:
-&#60;a id="youtube_2" href="KV2ssT8lzj8" alt='{"width":"600","height":"500"}'&#62;&#60;/a&#62;
+/*
+ * Html:
+ * &#60;a id="youtube_2" href="KV2ssT8lzj8" alt='{"width":"600","height":"500"}'&#62;&#60;/a&#62;
+ */
+ 
         </pre>
 
         <br><br>
         
         <center>
-          <a id="youtube_2" href="KV2ssT8lzj8" alt='{"width":"600","height":"500"}'></a>
+          <a id="youtube_2" href="DX1iplQQJTo" alt='{"width":"600","height":"500"}'></a>
         </center>
 
         <script>
@@ -124,9 +125,8 @@ Html:
         <h3>
           Code:
         </h3>
-        <pre>
-Javascript:
-&#60;script&#62;
+        <pre name="code" class="jscript">
+//Javascript:
 $('#input').blur(function(){
   var html = $.youtube.element('#element', $('#input').val());
 
@@ -138,12 +138,13 @@ $('#input').blur(function(){
     height:   '250'
   });
 });
-&#60;/script&#62;
 
-Html:
-&#60;input type="text" id="input"&#62;
-
-&#60;center id="container"&#62;&#60;/center&#62;
+/*
+ * Html:
+ * &#60;input type="text" id="input"&#62;
+ *
+ * &#60;center id="container"&#62;&#60;/center&#62;
+ */
         </pre>
         Try insert a youtube-id here: <input type="text" id="input">
         <br>
@@ -168,7 +169,10 @@ Html:
       </div>
 
     </div>
-    
+    <script>
+      dp.SyntaxHighlighter.ClipboardSwf = 'http://syntaxhighlighter.googlecode.com/svn-history/r86/trunk/Scripts/clipboard.swf';
+      dp.SyntaxHighlighter.HighlightAll('code');
+    </script>
   </body>
   
 </html>
