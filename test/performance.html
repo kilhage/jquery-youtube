@@ -4,40 +4,11 @@
     <title></title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <script src="http://code.jquery.com/jquery.js"></script>
-    </script><script type="text/javascript" src="http://github.com/balupton/jquery-syntaxhighlighter/raw/master/scripts/jquery.syntaxhighlighter.min.js"></script>
     <script src="../jquery-youtube.js"></script>
-    <script src="https://github.com/kilhage/jquery-benchmark/raw/master/jquery-benchmark.js"></script>
+    <script src="../../jquery-benchmark/jquery-benchmark.js"></script>
+    <script src="../../jquery-benchmark/jquery-benchmark-suit.js"></script>
     <script>
-        
-$.fn.performanceTest = function(tests){
-    var self = this;
-    
-    $.each(tests, function(module, test){
-        self.append("<h2>- "+module+"</h2>");
-        $.each(test.tests, function(i, ob){
-            //if ( ob.name != "Fast")return;
-            try {
-            var code = $("<code class='language-javascript'/>").html(ob.fn.toString()).hide();
-            $("<li />")
-                .html(ob.name+" :: <b>"+ob.test()+"ms</b>")
-                .appendTo(self)
-                .click(function(){
-                    code.slideToggle(50);
-                })
-                .css({"cursor":"pointer"})
-                .append(code);
-            } catch(e) {
-                console.log(e);
-            }
-        })
-    });
-    return this;
-};
-
 $(function(){
-
-    $("#results").performanceTest(tests);
-    $.SyntaxHighlighter.init();
     
     h = $(".hihi").youtube({
         type: $.youtube.IMAGE,
@@ -47,40 +18,20 @@ $(function(){
 
 });
 
-var times, a, b, tests = {}, _module, 
-
-test = function(name, fn){
-    tests[_module].tests.push({
-        test: function(){
-            times = tests[_module].times;
-            var b = $.benchmark();
-            fn();
-            return b.end().result();
-        },
-        name: name,
-        fn: fn
-    });
-},
-
-module = function(m, t){
-    _module = m;
-    tests[m] = {
-        times: t,
-        tests: []
-    };
-};
+plugin("jQuery.youtube");
 
 module("Video", 1000);
 
-test("Data from .data, reload", function(){
-    while(times--) {
+test("Data from .data, reload", function(t){
+    while(t--) {
         $('<a data-id="47piCmAB0s4" data-width="300" data-height="240" />').youtube();
     }
     
 });
 
-test("Dimentions and id from .data", function(){
-    while(times--) {
+test("Dimentions and id from .data", function(t){
+    var a;
+    while(t--) {
         a = $(document.createElement("a"))
             .data("id", "47piCmAB0s4")
             .data("width", "300")
@@ -90,9 +41,9 @@ test("Dimentions and id from .data", function(){
     
 });
 
-test('Dimentions from alt=\'{"width":500,"height":400}\', id from $.data, reload', function(){
+test('Dimentions from alt=\'{"width":500,"height":400}\', id from $.data, reload', function(t){
     var a;
-    while(times--) {
+    while(t--) {
         a = document.createElement("a");
         $.data(a, "id", "47piCmAB0s4");
         a.alt = '{"width":500,"height":400}';
@@ -101,9 +52,9 @@ test('Dimentions from alt=\'{"width":500,"height":400}\', id from $.data, reload
     
 });
 
-test('Dimentions from alt=\'{"width":500,"height":400}\', id from .data, reload', function(){
+test('Dimentions from alt=\'{"width":500,"height":400}\', id from .data, reload', function(t){
     var a;
-    while(times--) {
+    while(t--) {
         a = document.createElement("a");
         a.alt = '{"width":500,"height":400}';
         $(a).data("id", "47piCmAB0s4").youtube();
@@ -111,8 +62,8 @@ test('Dimentions from alt=\'{"width":500,"height":400}\', id from .data, reload'
     
 });
 
-test("Data from json", function(){
-    while(times--) {
+test("Data from json", function(t){
+    while(t--) {
         $(document.createElement("a")).youtube({
             id: "47piCmAB0s4",
             width: 500,
@@ -122,9 +73,9 @@ test("Data from json", function(){
     
 });
 
-test("Fast", function(){
+test("Fast", function(t){
     var a = document.createElement("a"), b = $(a);
-    while(times--) {
+    while(t--) {
         b.youtube({
             id: "47piCmAB0s4",
             width: 500,
@@ -133,9 +84,9 @@ test("Fast", function(){
     }
 });
 
-test("Fast2", function(){
+test("Fast2", function(t){
     var a = document.createElement("a");
-    while(times--) {
+    while(t--) {
         $(a).youtube({
             id: "47piCmAB0s4",
             width: 500,
@@ -147,9 +98,9 @@ test("Fast2", function(){
 
 module("Image", 1000);
 
-test("Data from json, reload", function(){
+test("Data from json, reload", function(t){
     var a;
-    while(times--) {
+    while(t--) {
         $(document.createElement("img")).youtube({
             type: $.youtube.IMAGE,
             id: "47piCmAB0s4",
@@ -160,9 +111,9 @@ test("Data from json, reload", function(){
     
 });
 
-test("Dimentions from width/height attributes, id from $.data, reload", function(){
+test("Dimentions from width/height attributes, id from $.data, reload", function(t){
     var img;
-    while(times--) {
+    while(t--) {
         img = document.createElement("img");
         img.width = 500;
         img.height = 400;
@@ -172,9 +123,9 @@ test("Dimentions from width/height attributes, id from $.data, reload", function
     
 });
 
-test("Dimentions from width/height attributes, id from .data, reload", function(){
+test("Dimentions from width/height attributes, id from .data, reload", function(t){
     var img;
-    while(times--) {
+    while(t--) {
         img = document.createElement("img");
         img.width = 500;
         img.height = 400;
@@ -183,9 +134,9 @@ test("Dimentions from width/height attributes, id from .data, reload", function(
     
 });
 
-test("Fast", function(){
+test("Fast", function(t){
     var img = document.createElement("img");
-    while(times--) {
+    while(t--) {
         $(img).youtube({
             type: $.youtube.IMAGE,
             id: "47piCmAB0s4",
@@ -195,9 +146,9 @@ test("Fast", function(){
     }
 });
 
-test("Fast2", function(){
+test("Fast2", function(t){
     var img = document.createElement("img"), b = $(img);
-    while(times--) {
+    while(t--) {
         b.youtube({
             type: $.youtube.IMAGE,
             id: "47piCmAB0s4",
@@ -207,17 +158,51 @@ test("Fast2", function(){
     }
 });
 
+module("Internal");
+
+test("$.youtube.get($(e))", 10000, function(t){
+    var e = document.createElement("a");
+    var b = $(e).youtube({
+            type: $.youtube.IMAGE,
+            id: "47piCmAB0s4",
+            width: 500,
+            height: 400
+        });
+    
+    while(t--) {
+        $.youtube.get(b);
+    }
+});
+
+test("$.youtube.get(e)", 10000, function(t){
+    var e = document.createElement("a");
+    var b = $(e).youtube({
+            type: $.youtube.IMAGE,
+            id: "47piCmAB0s4",
+            width: 500,
+            height: 400
+        });
+
+    while(t--) {
+        $.youtube.get(e);
+    }
+});
+
+test("$.youtube.config()", 10000, function(t){
+    while(t--) {
+        $.youtube.config();
+    }
+});
+
+test("$.youtube.config('hd')", 10000, function(t){
+    while(t--) {
+        $.youtube.config("hd");
+    }
+});
 
     </script>
   </head>
   <body>
-      <div id="results" style="margin-top:40px; margin-left: auto;margin-right:auto;width: 1000px;" alt='{"width":500,"height":400}'>
-          
-          <h1>
-              jQuery.youtube - Performance
-          </h1>
-          
-      </div>
       <img class="hihi" width="500" height="400"></a>
   </body>
 </html>

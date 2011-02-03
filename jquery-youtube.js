@@ -25,7 +25,7 @@ FUNCTION          = 'function',
 availableOptions  = [IMAGE, VIDEO],
 enable_log = this.console && typeof console.log === FUNCTION,
 params = {"autohide":true, "autoplay":true, "disablekb":true, "enablejsapi":true, "hd":true, "showinfo":true, "version":true},
-sync = ["config", "containers", "selector"],
+sync = ["containers"],
 config_data = ["width", "height", "name"],
 dim_data = ["width", "height"],
 push = Array.prototype.push,
@@ -72,11 +72,7 @@ $.youtube = function(element, config) {
     }
     this.element = $(element);
     this.config = $.extend(true, {}, $.youtube._config, config || {});
-    this.containers = {
-        name: 'title',
-        id:   'id',
-        data: 'alt'
-    };
+    this.containers = this.config.containers;
     this.is_new = true;
 };
 
@@ -179,7 +175,7 @@ $.youtube.prototype = {
     },
     
     getId: function() {
-        return this.config.id || this.element.data("id") || this.element.attr("href");
+        return this.config.id || this.element.data("id") || this.element.attr(this.config.containers.id);
     },
     
     replace: function(i, elem) {
@@ -197,11 +193,7 @@ $.youtube.prototype = {
 
             this.element[0].src = url;
             if ( this.type === VIDEO && this.config.videoType === OBJECT ) {
-                this.element.children().each(function(){
-                    if ( this.name === "movie" ) {
-                        this.value = url;
-                    }
-                });
+                this.element.find("param[name=movie]").val(url);
             }
         }
     }
@@ -237,7 +229,12 @@ $.extend($.youtube, {
         showinfo:     '0',
         iframeBorder: "0", 
         imageOffset:  "0", 
-        videoType:    OBJECT
+        videoType:    OBJECT,
+        containers: {
+            name: 'title',
+            id:   'href',
+            data: 'alt'
+        }
     },
     
     _log: enable_log,
@@ -322,49 +319,6 @@ $.extend($.youtube, {
             return this;
         }
         return $.extend(true, {}, this._config);
-    },
-
-    /***
-    * Internal log function, used for debuging
-    *
-    * @param {mixed} v:
-    *   boolean: set if the internal log function
-    *   should be enabled or not, you can also enter enable or disable to set this value
-    *   string: log a message using the internal log function
-    *   int: same as string
-    *
-    * @return: if the internal log function if enable or not(only if the don't pass something, else null)
-    */
-    log: function( v ) {
-        // If no value passed, return if the log is enabled or not
-        if( ! ( 0 in arguments ) ) {
-            return this._log;
-        }
-        switch( typeof v ) {
-            //if true/false passed, turn on/off the internal log function
-            case BOOL:
-                this._log = v;
-                break;
-            case NUMBER:
-            case STRING:
-                switch( v ) {
-                    //if 'enable' passed, enable the internal log function
-                    case 'enable':
-                        this._log = true;
-                        break;
-
-                    //if 'disable' passed, disable the internal log function
-                    case 'disable':
-                        this._log = false;
-                        break;
-
-                    //else log the value using the internal log function
-                    default:
-                        log( v );
-                }
-                break;
-        }
-        return null;
     },
     
     getImageUrl: function(data){
