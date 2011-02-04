@@ -213,4 +213,28 @@ test("Flexibility", function(){
     
 });
 
+test("Constants", function() {
+    expect(3);
+
+    var std = $.youtube.VIDEO;
+    var new_v = "_video";
+    var valid = true;
+    var a, y;
+    $.youtube.VIDEO = new_v;
+
+    try {
+        a = $("<div data-id='t_hR5KNdPEA' data-width='200' data-height='150' />").youtube($.youtube.VIDEO);
+        y = $.youtube.get(a);
+    } catch(e) {
+        log(e);
+        valid = false;
+    }
+    
+    ok(!!y && y.type === $.youtube.VIDEO, "Valid youtube object and type");
+    ok(a.is("iframe"), "Valid element");
+    ok(valid, "ok errors");
+    $.youtube.VIDEO = std;
+
+});
+
 module(_m + $.youtube.IMAGE);

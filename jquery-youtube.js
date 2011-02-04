@@ -27,7 +27,7 @@ var enable_log = window.console && typeof console.log === "function",
     config_data = ["width", "height"],
     dim_data = ["width", "height"],
     sync_attributes = ["id", "className"],
-    DATA_ID = "__YouTube__";
+    DATA_ID = "jQuery.youtube:"+$.now();
 
 function log(m) {
     if( enable_log && $.youtube.debug ) {
@@ -89,7 +89,7 @@ $.youtube = function(element, config) {
 
 $.youtube.prototype = {
     
-    init: function(type){
+    init: function(type) {
         var fn,
             i = config_data.length,
             jsonStr, 
@@ -104,8 +104,17 @@ $.youtube.prototype = {
             return ! config.height || ! config.width;
         }
         
-        fn = $.youtube[this.type];
-        if ( ! $.isFunction(fn) ) {
+        fn = false;
+        switch(this.type) {
+            case $.youtube.VIDEO:
+                fn = $.youtube.video;
+                break;
+            case $.youtube.IMAGE:
+                fn = $.youtube.image;
+                break;
+        }
+        
+        if ( fn === false ) {
             return log(this.type + ' is not defined');
         }
         
