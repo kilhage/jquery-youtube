@@ -1,22 +1,3 @@
-<!doctype html>
-<html>
-  <head>
-    <title></title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <script src="http://code.jquery.com/jquery.js"></script>
-    <script src="../jquery-youtube.js"></script>
-    <script src="../../jquery-benchmark/jquery-benchmark.js"></script>
-    <script src="../../jquery-benchmark/jquery-benchmark-suit.js"></script>
-    <script>
-$(function(){
-    
-    h = $(".hihi").youtube({
-        type: $.youtube.IMAGE,
-        id: "47piCmAB0s4"
-
-    }).hide();
-
-});
 
 plugin("jQuery.youtube");
 
@@ -199,10 +180,3 @@ test("$.youtube.config('hd')", 10000, function(t){
         $.youtube.config("hd");
     }
 });
-
-    </script>
-  </head>
-  <body>
-      <img class="hihi" width="500" height="400"></a>
-  </body>
-</html>

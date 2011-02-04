@@ -1,30 +1,33 @@
 
-var log = function(m) {
+window.log = function(m) {
     if ( typeof window.console === "object" && typeof console.log === "function" ) {
-        var type = typeof m;
-        if ( type === "string" || type === "number") {
-            m = $.Class.log_prefix + m;
-        }
         console.log(m);
     }
     return m;
-}, ID = "47piCmAB0s4", IID = "ui",
+}
+var ID = "47piCmAB0s4",
+IID = "ui",
 SRC = "http://www.youtube.com/embed/47piCmAB0s4?autohide=0&autoplay=0&enablejsapi=0&version=4&hd=1&disablekb=0&showinfo=0&";
 
-module(_m+$.youtube.VIDEO);
+module( _m + $.youtube.VIDEO);
 
-$.extend($.youtube._config, {
-    videoType: $.youtube.IFRAME,
-    width: 200,
-    height: 150,
-    id: ID,
-    name: "name"
-});
+$.youtube._config.videoType = $.youtube.IFRAME;
+
+function setupConfig(){
+    return $.extend($.youtube.config(), {
+        width: "200",
+        height: "150",
+        id: ID,
+        name: "name"
+    });
+}
 
 test("Config", function() {
-    expect(3);
+    expect(4);
     
     var config = $.youtube.config(), org_hd = config.hd, n = "11111";
+
+    ok(typeof config === "object", "valid config");
     
     config.hd = n;
     ok($.youtube._config.hd != n, "Make sure $.youtube.config() is passing a copy of the config");
@@ -40,9 +43,9 @@ test("Config", function() {
 test("Build a valid iframe element", function() {
     expect(6);
   
-    var data = $.youtube.config();
+    var data = setupConfig();
     
-    var e = $.youtube.video(data);
+    var e = $($.youtube.video(data));
   
     $.each({
         localName: "iframe",
@@ -58,11 +61,11 @@ test("Build a valid iframe element", function() {
 
 test("Build a valid object element", function() {
     expect(13);
-    var data = $.youtube.config();
+    var data = setupConfig();
     
     data.videoType = $.youtube.OBJECT;
     
-    var e = $.youtube.video(data);
+    var e =$($.youtube.video(data));
     
     $.each({
         localName: "object",
@@ -101,31 +104,36 @@ test("Build a valid object element", function() {
 });
 
 test("Youtube object maintenance", function() {
+    expect(17);
     
-    var e = $("<a />").youtube($.youtube.VIDEO);
+    var config = setupConfig();
+    config.type = $.youtube.VIDEO;
+    var e = $("<a />").youtube(config);
     
-    var c = $.data(e[0], $.youtube.DATA_ID),t;
+    var c = $.youtube.get(e),
+        t;
+    ok(typeof c === "object");
     c.__check = true;
     
     e.youtube($.youtube.VIDEO);
-    c = $.data(e[0], $.youtube.DATA_ID);
+    c = $.youtube.get(e);
     
     ok(c.__check);
     
     e.youtube($.youtube.IMAGE);
-    c = $.data(e[0], $.youtube.DATA_ID);
+    c = $.youtube.get(e);
     
     ok(c.__check);
     ok(c.type === $.youtube.IMAGE);
     
     e.youtube({id:"t_hR5KNdPEA"});
-    c = $.data(e[0], $.youtube.DATA_ID);
+    c = $.youtube.get(e);
     
     ok(c.__check);
     ok(c.config.id === "t_hR5KNdPEA");
     
     e.youtube($.youtube.VIDEO);
-    c = $.data(e[0], $.youtube.DATA_ID);
+    c = $.youtube.get(e);
     
     ok(c.__check);
     ok(c.type === $.youtube.VIDEO);
@@ -135,7 +143,7 @@ test("Youtube object maintenance", function() {
         videoType: t = (c.config.videoType === $.youtube.OBJECT ? $.youtube.IFRAME : $.youtube.OBJECT)
     });
     
-    c = $.data(e[0], $.youtube.DATA_ID);
+    c = $.youtube.get(e);
     
     ok(c.__check);
     ok(c.config.id === ID);
@@ -146,7 +154,7 @@ test("Youtube object maintenance", function() {
         width: old_width+5
     });
     
-    c = $.data(e[0], $.youtube.DATA_ID);
+    c = $.youtube.get(e);
     
     ok(c.__check);
     ok(c.config.id === ID);
@@ -165,4 +173,44 @@ test("Youtube object maintenance", function() {
     
 });
 
-module(_m+$.youtube.IMAGE);
+test("Flexibility", function(){
+    expect(57);
+    
+    var c = $.youtube.config(), id = "t_hR5KNdPEA";
+    
+    delete c.id;
+    delete c.height;
+    delete c.width;
+    delete c.name;
+    
+    var e = $(".flexibility-video").children();
+    
+    e.youtube(c);
+    e.each(function(i){
+        var y = $.youtube.get(this);
+        ok(y instanceof $.youtube, "Check that the "+(i+1)+" have a valid youtube object attached to it");
+        if ( ! y ) {
+            return false;
+        }
+        
+        ok(y.id === id, "Check id ('"+y.config.id+"' === '"+id+"')");
+        ok(y.config.height == "80", "Check height ('"+y.config.height+"' === '80')");
+        ok(y.config.width == "200", "Check width ('"+y.config.width+"' === '200')");
+        
+        if ( $(this).hasClass("hasName") ) {
+            ok(y.config.name === "name", "Check name('"+y.config.name+"' === 'name')");
+        }
+        
+        if ( $(this).hasClass("hasId") ) {
+            ok($(this).attr("id") === "flexibility-video"+i, "Check #id('"+$(this).attr("id")+"' === 'flexibility-video"+i+"')");
+        }
+        
+        if ($(this).hasClass("hasData") ) {
+            ok($(this).data("data") === "data", "Check that data are preserved")
+        }
+        
+    });
+    
+});
+
+module(_m + $.youtube.IMAGE);
