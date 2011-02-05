@@ -5,7 +5,7 @@
 	<link rel="stylesheet" href="https://github.com/jquery/qunit/raw/master/qunit/qunit.css" type="text/css" media="screen">
 	<script type="text/javascript" src="https://github.com/jquery/qunit/raw/master/qunit/qunit.js"></script>
     <script src="http://code.jquery.com/jquery.js" type="text/javascript"></script>
-    <script src="../jquery-youtube<?php echo isset($_GET["a"]) ? ".min" : "" ?>.js" type="text/javascript"></script>
+    <script src="../jquery-youtube<?php echo isset($_GET["a"]) ? $_GET["a"] : "" ?>.js" type="text/javascript"></script>
     <script>
         var _m = "Source::";
     </script>

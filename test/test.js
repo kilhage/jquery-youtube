@@ -1,17 +1,6 @@
 
-window.log = function(m) {
-    if ( typeof window.console === "object" && typeof console.log === "function" ) {
-        console.log(m);
-    }
-    return m;
-}
-var ID = "47piCmAB0s4",
-IID = "ui",
-SRC = "http://www.youtube.com/embed/47piCmAB0s4?autohide=0&autoplay=0&enablejsapi=0&version=4&hd=1&disablekb=0&showinfo=0&";
-
-module( _m + $.youtube.VIDEO);
-
-$.youtube._config.videoType = $.youtube.IFRAME;
+var log = $.youtube.log,
+    ID = "47piCmAB0s4";
 
 function setupConfig(){
     return $.extend($.youtube.config(), {
@@ -22,7 +11,21 @@ function setupConfig(){
     });
 }
 
-test("Config", function() {
+function validUrl(url, config) {
+    for( var parts = url.split("?")[1].split("&"), c, i = 0; i <= parts.length; (c = parts[i++]) ) {
+        if ( c != null ) {
+            c = c.split("=");
+            if( c[1] !== (config[c[0]] === true ? "1" : config[c[0]] === false ? "0" : config[c[0]]) ) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+module(_m + "Internal");
+
+test("$.youtube.config()", function() {
     expect(4);
     
     var config = $.youtube.config(), org_hd = config.hd, n = "11111";
@@ -30,33 +33,121 @@ test("Config", function() {
     ok(typeof config === "object", "valid config");
     
     config.hd = n;
-    ok($.youtube._config.hd != n, "Make sure $.youtube.config() is passing a copy of the config");
+    ok($.youtube.config.hd != n, "Make sure $.youtube.config() is passing a copy of the config");
     
-    ok($.youtube.config("hd") === $.youtube._config.hd, "");
+    ok($.youtube.config("hd") === $.youtube.config.hd, "");
     
     $.youtube.config("hd", n);
-    ok($.youtube.config("hd") === n && $.youtube._config.hd === n, "");
+    ok($.youtube.config("hd") === n && $.youtube.config.hd === n, "");
     
-    $.youtube._config.hd = org_hd;
+    $.youtube.config.hd = org_hd;
+    
 });
+
+test("$.youtube.get()", function(){
+    expect(3);
+    var c = setupConfig();
+    
+    c.type = $.youtube.VIDEO;
+    c.videoType = $.youtube.IFRAME;
+    ok($.youtube.get($("<div />").youtube(c)));
+    
+    c.type = $.youtube.VIDEO;
+    c.videoType = $.youtube.OBJECT;
+    ok($.youtube.get($("<div />").youtube(c)));
+    
+    c.type = $.youtube.IMAGE;
+    ok($.youtube.get($("<div />").youtube(c)));
+    
+});
+
+test("$.youtube.is()", function(){
+    expect(14);
+    
+    var c = setupConfig(),
+    NOT = [
+        $("<div />"),
+        $(),
+        [],
+        {},
+        "hjk",
+        432432,
+        null,
+        undefined,
+        function(){},
+        new (function(){}),
+        true,
+        false,
+        NaN
+    ],
+    OK = [
+        $("<div />").youtube(c)
+    ],
+    
+    i = OK.length;
+    while(i--) {
+        ok($.youtube.is(OK[i]), "check '"+OK[i]+"' is a valid youtube object");
+    }
+    
+    i = NOT.length;
+    while(i--) {
+        ok(!$.youtube.is(NOT[i]), "check '"+NOT[i]+"' isn't a valid youtube object");
+    }
+    
+});
+
+test("Constants", function() {
+    expect(4);
+
+    $.each({"OBJECT": "_object", "IFRAME": "_iframe", "VIDEO": "_video", "IMAGE": "_image"}, function(key, value){
+        var std = $.youtube[key],
+            new_v = value, a, y;
+
+        $.youtube[key] = new_v;
+
+        try {
+            a = $("<div data-id='t_hR5KNdPEA' data-width='200' data-height='150' />").youtube($.youtube[key]);
+            y = $.youtube.get(a);
+        } catch(e) {
+            log(e);
+            ok(false, "ok errors");
+        }
+        
+        if ( key === "VIDEO" || key === "IMAGE" ) {
+            ok(y && y.type === $.youtube[key], "Valid youtube object and type");
+        } else {
+            ok(y && y.type === $.youtube.VIDEO && y.config.videoType === $.youtube[key], "Valid youtube object and type");
+        }
+        
+        $.youtube[key] = std;
+
+    });
+
+});
+
+module( _m + $.youtube.VIDEO);
 
 test("Build a valid iframe element", function() {
     expect(6);
   
     var data = setupConfig();
     
-    var e = $($.youtube.video(data));
+    data.videoType = $.youtube.IFRAME;
+    
+    var e = $($.youtube.video(data)).find("iframe");
   
     $.each({
         localName: "iframe",
         width: "200", 
         height: "150",
         title: "name", 
-        type: "text/html",
-        src: SRC
+        type: "text/html"
     }, function(k,v){
         equals(e[0][k], v, "Check: "+k);
     });
+    
+    ok(validUrl(e[0].src, data), "Check: src");
+    
 });
 
 test("Build a valid object element", function() {
@@ -65,7 +156,7 @@ test("Build a valid object element", function() {
     
     data.videoType = $.youtube.OBJECT;
     
-    var e =$($.youtube.video(data));
+    var e = $($.youtube.video(data)).find("object");
     
     $.each({
         localName: "object",
@@ -86,14 +177,15 @@ test("Build a valid object element", function() {
                 break;
             case "movie":
                 equals(this.localName, "param");
-                equals(this.value, "http://www.youtube.com/v/47piCmAB0s4?autohide=0&autoplay=0&enablejsapi=0&version=4&hd=1&disablekb=0&showinfo=0&?fs=1&amp;hl=en_US&amp;rel=0");
+                ok(validUrl(this.value, data));
                 break;
             default:
                 if ( this.localName != "embed" ) {
                     ok(false, "invalid element in the <object> localName="+this.localName);
                     break;
                 }
-                equals(this.src, "http://www.youtube.com/v/47piCmAB0s4?autohide=0&autoplay=0&enablejsapi=0&version=4&hd=1&disablekb=0&showinfo=0&?fs=1&amp;hl=en_US&amp;rel=0", "src on the embed element");
+                
+                ok(validUrl(this.src, data), "src on the embed element");
                 equals(this.type, "application/x-shockwave-flash", "type on the embed element");
                 equals(this.width, "200", "width on the embed element");
                 equals(this.height, "150", "height on the embed element");
@@ -104,7 +196,7 @@ test("Build a valid object element", function() {
 });
 
 test("Youtube object maintenance", function() {
-    expect(17);
+    expect(19);
     
     var config = setupConfig();
     config.type = $.youtube.VIDEO;
@@ -126,7 +218,7 @@ test("Youtube object maintenance", function() {
     ok(c.__check);
     ok(c.type === $.youtube.IMAGE);
     
-    e.youtube({id:"t_hR5KNdPEA"});
+    e.youtube("t_hR5KNdPEA");
     c = $.youtube.get(e);
     
     ok(c.__check);
@@ -171,17 +263,21 @@ test("Youtube object maintenance", function() {
     ok(c.config.id === ID);
     ok(c.config.height === old_height+5);
     
+    var new_id = "7rE0-ek6MZA";
+    
+    e.youtube(new_id);
+    
+    c = $.youtube.get(e);
+    
+    ok(c.__check);
+    ok(c.config.id === new_id);
+    
 });
 
 test("Flexibility", function(){
-    expect(57);
+    expect(62);
     
     var c = $.youtube.config(), id = "t_hR5KNdPEA";
-    
-    delete c.id;
-    delete c.height;
-    delete c.width;
-    delete c.name;
     
     var e = $(".flexibility-video").children();
     
@@ -211,30 +307,55 @@ test("Flexibility", function(){
         
     });
     
-});
-
-test("Constants", function() {
-    expect(3);
-
-    var std = $.youtube.VIDEO;
-    var new_v = "_video";
-    var valid = true;
-    var a, y;
-    $.youtube.VIDEO = new_v;
-
-    try {
-        a = $("<div data-id='t_hR5KNdPEA' data-width='200' data-height='150' />").youtube($.youtube.VIDEO);
-        y = $.youtube.get(a);
-    } catch(e) {
-        log(e);
-        valid = false;
-    }
+    c.height = "20";
+    c.width = "582";
     
-    ok(!!y && y.type === $.youtube.VIDEO, "Valid youtube object and type");
-    ok(a.is("iframe"), "Valid element");
-    ok(valid, "ok errors");
-    $.youtube.VIDEO = std;
-
+    $.each([
+            ID,
+            $.youtube.VIDEO,
+            $.youtube.IMAGE, 
+            $.youtube.OBJECT, 
+            $.youtube.IFRAME
+        ], function(i, param) {
+        switch(i) {
+            case 0:
+                delete c.id;
+                break;
+            case 4:
+            case 3:
+                c.videoType = "";
+            case 1:
+            case 2:
+                c.id = ID;
+                break;
+        }
+        
+        var a = $("<div />").youtube(param, c);
+        var y = $.youtube.get(a);
+        
+        if ( ! $.youtube.is(a) ) {
+            log(a);
+            ok(false, "not a valid object");
+            return;
+        }
+        
+        switch(i) {
+            case 0:
+                equal(y.config.id, param, "check id");
+                break
+            case 1:
+            case 2:
+                equal(y.config.type, param, ("check is " +( i == 1 ? "video" : "image")));
+                break
+            case 3:
+            case 4:
+                equal(y.config.videoType, param, ("check is " + (i == 3 ? "object" : "iframe")));
+                break
+        }
+    });
+    
 });
 
 module(_m + $.youtube.IMAGE);
+
+// TODO

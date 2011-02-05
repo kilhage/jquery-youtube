@@ -1,33 +1,20 @@
-/****************************************************************
- * jQuery Youtube plugin
- ****************************************************************
- * Class for loading Youtube videos and images
- *
- * https://github.com/kilhage/jquery-youtube
- * @creator Emil Kilhage, 2010
- * @version: 1.0
- * @date: 2011-02-03 00:46:30
- * MIT Licensed.
- * ***************************************************************
- * For usage examples, see readme/examples
- ****************************************************************/
-(function($, doc) {
+(function( $, doc, undefined ) {
 "use strict";
 
 var enable_log = window.console && typeof console.log === "function",
     params = {
-        "autohide":true, 
-        "autoplay":true, 
-        "disablekb":true, 
-        "enablejsapi":true, 
-        "hd":true, 
-        "showinfo":true, 
-        "version":true
+        "autohide": false, 
+        "autoplay": false, 
+        "disablekb": false, 
+        "enablejsapi": false, 
+        "hd": true, 
+        "showinfo": false, 
+        "version": "4"
     },
     config_data = ["width", "height"],
     dim_data = ["width", "height"],
     sync_attributes = ["id", "className"],
-    DATA_ID = "jQuery.youtube:"+$.now();
+    DATA_ID = "youtube";
 
 function log(m) {
     if( enable_log && $.youtube.debug ) {
@@ -37,7 +24,7 @@ function log(m) {
 }
 
 function attr(e, a) {
-    var v, i
+    var v, i;
     if ( typeof a === "object" ) {
         i = a.length;
         while(i--) {
@@ -58,21 +45,29 @@ $.fn.youtube = function( type, config ) {
     
     config = config || {};
     
-    var i = this.length, yt, id, 
-        validType = typeof type === "string" && $.inArray( type, [$.youtube.IMAGE, $.youtube.VIDEO] ) !== -1;
+    var i = this.length, 
+        yt, 
+        typo_s = typeof type === "string",
+        validType = typo_s && $.youtube.validType(type), 
+        merge;
+        
+    if ( ! validType && typo_s && (merge = type === $.youtube.IFRAME || type === $.youtube.OBJECT ? {videoType: type,type:$.youtube.VIDEO} : type ? {id: type} : false) ) {
+        config = $.extend(true, {}, config, merge);
+    }
     
-    while ( i-- ) {;
+    while ( i-- ) {
         yt = $.youtube.get(this[i]) || new $.youtube(this[i], config);
-        if ( config.reload === true || yt.is_new || type && yt.type !== type ) {
+        
+        if ( config.reload === true || yt.is_new || validType && yt.type !== type ) {
             if ( yt.init( ! validType && yt.is_new ? $.youtube.VIDEO : type) ) {
                 if ( ! yt.is_new ) {
-                    yt.updateConfig(config);
+                    yt.update(config);
                 }
                 yt.replace(i, this);
             }
             
         } else {
-            yt.updateConfig(config);
+            yt.update(config);
         }
     }
     return this;
@@ -83,7 +78,7 @@ $.youtube = function(element, config) {
         return new $.youtube(element, config);
     }
     this.element = $(element);
-    this.config = $.extend(true, {}, $.youtube._config, config || {});
+    this.config = $.extend(true, {}, $.youtube.config, config || {});
     this.is_new = true;
 };
 
@@ -96,36 +91,29 @@ $.youtube.prototype = {
             item,
             config = this.config,
             containers = this.config.containers,
-            element = this.element;
-            
-        config.type = this.type = type;
+            element = this.element,
+            bind = $.youtube.bind;
         
         function notValidDims() {
             return ! config.height || ! config.width;
         }
         
-        fn = false;
-        switch(this.type) {
-            case $.youtube.VIDEO:
-                fn = $.youtube.video;
-                break;
-            case $.youtube.IMAGE:
-                fn = $.youtube.image;
-                break;
+        if ( ! (fn = $.youtube.getObjectFn(type)) ) {
+            if ( this.is_new || ! (fn = $.youtube.getObjectFn(type = this.type)) ) {
+                return log(type + ' is not defined');
+            }
         }
         
-        if ( fn === false ) {
-            return log(this.type + ' is not defined');
-        }
+        config.type = this.type = type;
         
         while ( i-- ) {
             config[config_data[i]] = config[config_data[i]] || element.data(config_data[i]) || "";
         }
 
-        config.id = this.getId();
+        config.id = config.id || element.data("id") || attr(element, containers.id);
 
         if ( ! config.id ) {
-            config.id = this.id;
+            config.id = this.id || "";
             return log("no id, returns");
         }
 
@@ -142,6 +130,7 @@ $.youtube.prototype = {
             
             if ( notValidDims() ) {
                 jsonStr = attr(element, containers.data);
+                
                 if (jsonStr) {
                     try {
                         $.extend(config, $.parseJSON(jsonStr));
@@ -150,7 +139,7 @@ $.youtube.prototype = {
                     }
                 }
                 if ( !jsonStr || notValidDims() ) {
-                    log(this)
+                    log(this);
                     return log( ' no dimentions, returns' );
                 }
             }
@@ -158,12 +147,16 @@ $.youtube.prototype = {
         
         config.name = config.name || attr(element, containers.name) || element.data("name") || "";
         
-        item = fn.call(this, config);
+        if ( ! (item = fn.call(this, config)) ) {
+            return log("invalid object");
+        }
         
         // Sync attributes
         i = sync_attributes.length;
         while ( i-- ) {
-            item[sync_attributes[i]] = element[0][sync_attributes[i]];
+            if ( element[0][sync_attributes[i]] != null ) {
+                item[sync_attributes[i]] = element[0][sync_attributes[i]];
+            }
         }
         
         // Sync data
@@ -175,57 +168,56 @@ $.youtube.prototype = {
         // Replace the element on a lower level
         element[0] = item;
         
+        for ( i in bind ) {
+            if ( $.isFunction($.youtube.bind[i]) ) {
+                element.bind(i, (function(fn, self) {
+                        return function() {
+                            return fn.call(this, self);
+                        };
+                    }($.youtube.bind[i], this))
+                );
+            } else {
+                log("unable to bind "+i);
+            }
+        }
+        
         this.is_new = false;
         this.id = config.id;
         
         return this;
     },
     
-    updateConfig: function(config) {
-        var fns = {}, key, sync = {id:true,width:true,height:true};
-        for ( key in config ) {
-            if ( sync[key] ) {
-                fns[key] = config[key] && config[key] != this.config[key];
+    update: function(config) {
+        for ( var key in config ) {
+            if ( $.isFunction(this.update[key]) && config[key] && config[key] != this.config[key] ) {
+                this.update[key].call(this);
             }
             this.config[key] = config[key];
         }
-        for ( key in fns ) {
-            if ( fns[key] === true ) {
-                if ( $.isFunction(this.update[key]) ) {
-                    this.update[key].call(this);
-                } else {
-                    log(key+" isn't a function")
-                }
-            }
-        }
         return this;
-    },
-    
-    getId: function() {
-        return this.config.id || this.element.data("id") || attr(this.element, this.config.containers.id);
     },
     
     replace: function(i, elem) {
-        $._data(this.element[0], DATA_ID, this);
-        $._data(elem[i], DATA_ID, this);
+        $.data(this.element[0], DATA_ID, this);
+        $.data(elem[i], DATA_ID, this);
         elem[i] = this.element[0];
         return this;
-    },
-    
-    update: {
-        id: function() {
-            var url = this.type === $.youtube.VIDEO ? 
-                $.youtube.getVideoUrl(this.config) :
-                $.youtube.getImageUrl(this.config);
-
-            this.element[0].src = url;
-            if ( this.type === $.youtube.VIDEO && this.config.videoType === $.youtube.OBJECT ) {
-                this.element.find("param[name=movie]").val(url);
-            }
-        }
     }
     
 };
+
+$.extend($.youtube.prototype.update, {
+    id: function() {
+        var url = this.type === $.youtube.VIDEO ? 
+            $.youtube.video.url(this.config) :
+            $.youtube.image.url(this.config);
+
+        this.element[0].src = url;
+        if ( this.type === $.youtube.VIDEO && this.config.videoType === $.youtube.OBJECT ) {
+            this.element.find("param[name=movie]").val(url);
+        }
+    }
+});
 
 $.each(["width", "height"], function(i, name){
     $.youtube.prototype.update[name] = function(){
@@ -243,121 +235,145 @@ $.extend($.youtube, {
     VIDEO: "video",
     IFRAME: "iframe",
     OBJECT : "object",
+    
+    // Id used to store data on dom elements
     DATA_ID: DATA_ID,
 
+    // Urls
     url: 'http://www.youtube.com',
     img_url: "http://img.youtube.com/vi/",
     
     debug: enable_log,
-
-    /***
-    * @param <object> config: The new config you want to use
-    * @param <boolean> <default: true> replace: if you want to replace the config or not
-    */
+    
     config: function( config, val, byRef ) {
         var type = typeof config, name;
         if ( config != null ) {
-            if ( type === "object" ) {
+            if ( type === "object" && config !== null ) {
                 for ( name in config ) {
-                    $.youtube._config[ name ] = config[ name ];
+                    $.youtube.config[ name ] = config[ name ];
                 }
             } else if ( type === "string" ) {
                 if ( val !== undefined ) {
-                    this._config[config] = val;
+                    $.youtube.config[config] = val;
                 } else {
-                    return $.youtube._config[config];
+                    return $.youtube.config[config];
                 }
             }
-            return this;
+            return $.youtube;
         }
-        return byRef ? this._config : $.extend(true, {}, $.youtube._config);
-    },
-    
-    getImageUrl: function(data){
-        return $.youtube.img_url + data.id+ '/' + data.imageOffset + '.jpg';
-    },
-    
-    getVideoUrl: function(data) {
-        var url = data.id + '?', name, v;
-        for ( name in data ) {
-            v = data[ name ];
-            
-            if ( params[name] != null ) {
-                if ( v === false ) {
-                    v = '0';
-                } else if( v === true ) {
-                    v = '1';
-                }
-                url += name + '=' + v + '&';
-            }
-        }
-        return data.videoType === $.youtube.IFRAME ? 
-            $.youtube.url + '/embed/' + url : 
-            $.youtube.url + '/v/' + url + '?fs=1&amp;hl=en_US&amp;rel=0';
+        return  $.extend(!byRef, {}, $.youtube.config);
     },
     
     image: function( data ) {
         var e = doc.createElement("img");
-        e.src = $.youtube.getImageUrl(data);
+        e.src = $.youtube.image.url(data);
         e.width = data.width;
         e.height = data.height;
         return e;
     },
 
     video: function( data ) {
-        var url = $.youtube.getVideoUrl(data), name, e, p;
+        var url = $.youtube.video.url(data),
         
-        if ( data.videoType === $.youtube.IFRAME ) {
-            e = doc.createElement("iframe");
-            e.title = data.name || data.title || "";
-            e.type = "text/html";
-            e.src = url;
-            e.frameborder = data.iframeBorder;
-        } else {
-            e = doc.createElement("object");
+        e = data.videoType === $.youtube.IFRAME ?
+            $.youtube.video.iframe(data, url) :
+            $.youtube.video.object(data, url),
+        
+        // Since the object element don't allow any 
+        // data to be stored on it, we need to create a dummie div
+        // to put the element in
+        o = doc.createElement("div");
             
-            $.each(["allowFullScreen", "allowscriptaccess", "movie"], function(i, name){
-                p = doc.createElement("param");
-                p.name = name;
-                p.value = name !== "movie" ? "true" : url;
-                e.appendChild(p);
-            });
-            
-            p = doc.createElement("embed");
-            p.src = url;
-            p.type = "application/x-shockwave-flash";
-            p.allowscriptaccess = "true";
-            
-            p.width  = data.width;
-            p.height = data.height;
-            
-            e.appendChild(p);
-        }
+        o.appendChild(e);
         
         e.width  = data.width;
         e.height = data.height;
         
-        return e;
+        return o;
+    },
+    
+    bind: function(name, fn) {
+        $.youtube.bind[name] = fn;
     },
     
     get: function(elem) {
-        return  typeof elem === "object" ? 
-            $._data(elem.jquery === $.fn.jquery ? elem[0] : elem, DATA_ID) :
-                typeof elem === "string" ? $.youtube.get(elem) : null;
+        return typeof elem === "object" && elem !== null ? 
+            (elem instanceof $.youtube) ? elem : 
+                $.data((elem instanceof $) && elem[0] ? elem[0] : elem, DATA_ID) :
+                typeof elem === "string" ? $.youtube.get($(elem)) : undefined;
+    },
+    
+    validType: function( type ) {
+        return $.inArray( type, [$.youtube.IMAGE, $.youtube.VIDEO] ) !== -1;
+    },
+    
+    is: function( e ) {
+        return (e = $.youtube.get(e)) && (e instanceof $.youtube) && $.youtube.validType(e.config.type);
+    },
+    
+    log: log,
+    
+    getObjectFn: function(type) {
+        return type === $.youtube.VIDEO ? $.youtube.video : type === $.youtube.IMAGE ? $.youtube.image: false;
     }
 
 });
 
+$.youtube.image.url = function(data){
+    return $.youtube.img_url + data.id+ '/' + data.imageOffset + '.jpg';
+};
+
+$.extend($.youtube.video, {
+    
+    url: function(data) {
+        var url = data.id + '?', name, v;
+        for ( name in data ) {
+            v = data[ name ];
+            if ( params[name] != null ) {
+                url += name + '=' + (v === false ? "0" : v === true ? "1" : v) + '&';
+            }
+        }
+        url = url.replace(/&$/, "");
+        return data.videoType === $.youtube.IFRAME ? 
+            $.youtube.url + '/embed/' + url : 
+            $.youtube.url + '/v/' + url + '?fs=1&amp;hl=en_US&amp;rel=0';
+    },
+    
+    iframe: function(data, url) {
+        var e = doc.createElement("iframe");
+        e.title = data.name || data.title || "";
+        e.type = "text/html";
+        e.src = url;
+        e.frameborder = data.iframeBorder;
+        return e;
+    },
+    
+    object: function(data, url) {
+        var e = doc.createElement("object"), p;
+
+        $.each(["allowFullScreen", "allowscriptaccess", "movie"], function(i, name){
+            var p = doc.createElement("param");
+            p.name = name;
+            p.value = name !== "movie" ? "true" : url;
+            e.appendChild(p);
+        });
+
+        p = doc.createElement("embed");
+        p.src = url;
+        p.type = "application/x-shockwave-flash";
+        p.allowscriptaccess = "true";
+
+        p.width  = data.width;
+        p.height = data.height;
+
+        e.appendChild(p);
+        return e;
+    }
+});
+
 // Default config
-// Don't access this directly, use the jQuery.youtube.config method instead
-$.youtube._config = {
-    autohide:     '0',
-    autoplay:     '0',
-    enablejsapi:  '0',
-    version:      '4',
-    hd:           '1',
-    disablekb:    '0',
-    showinfo:     '0',
+// Don't access this directly, use the jQuery.youtube.config() method instead
+$.extend($.youtube.config, {
     iframeBorder: "0", 
     imageOffset:  "0", 
     videoType:    $.youtube.OBJECT,
@@ -366,6 +382,6 @@ $.youtube._config = {
         id:   ['href', "src"],
         data: 'alt'
     }
-};
+}, params);
 
 }(jQuery, document));
