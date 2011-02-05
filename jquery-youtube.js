@@ -2,26 +2,25 @@
 "use strict";
 
 var enable_log = window.console && typeof console.log === "function",
-    params = {
-        "autohide": false, 
-        "autoplay": false, 
-        "disablekb": false, 
-        "enablejsapi": false, 
-        "hd": true, 
-        "showinfo": false, 
-        "version": "4"
-    },
-    config_data = ["width", "height"],
-    dim_data = ["width", "height"],
-    sync_attributes = ["id", "className"],
-    DATA_ID = "youtube";
-
-function log(m) {
+params = {
+    autohide: false, 
+    autoplay: false, 
+    disablekb: false, 
+    enablejsapi: false, 
+    hd: true, 
+    showinfo: false, 
+    version: "4"
+},
+rexceptnodes = /span|a|div|td|li|ul|p/gi,
+data_attrs = ["width", "height", "id", "name"],
+sync_attributes = ["id", "className"],
+DATA_ID = "youtube",
+log = function(m) {
     if( enable_log && $.youtube.debug ) {
         console.log( typeof m === "string" ? 'jQuery Youtube :: ' + m : m );
     }
     return null;
-}
+};
 
 function attr(e, a) {
     var v, i;
@@ -85,18 +84,11 @@ $.youtube = function(element, config) {
 $.youtube.prototype = {
     
     init: function(type) {
-        var fn,
-            i = config_data.length,
-            jsonStr, 
-            item,
+        var fn, i = data_attrs.length,
+            jsonStr, item,
             config = this.config,
             containers = this.config.containers,
-            element = this.element,
-            bind = $.youtube.bind;
-        
-        function notValidDims() {
-            return ! config.height || ! config.width;
-        }
+            element = this.element;
         
         if ( ! (fn = $.youtube.getObjectFn(type)) ) {
             if ( this.is_new || ! (fn = $.youtube.getObjectFn(type = this.type)) ) {
@@ -107,45 +99,30 @@ $.youtube.prototype = {
         config.type = this.type = type;
         
         while ( i-- ) {
-            config[config_data[i]] = config[config_data[i]] || element.data(config_data[i]) || "";
+            config[data_attrs[i]] = config[data_attrs[i]] || element.data(data_attrs[i]) || attr(element, containers[data_attrs[i]]);
         }
-
-        config.id = config.id || element.data("id") || attr(element, containers.id);
 
         if ( ! config.id ) {
             config.id = this.id || "";
             return log("no id, returns");
         }
 
-        if ( notValidDims() ) {
-            
-            // If we are building an image, we can try to get 
-            // the dimentions from the width/heigth attributes
-            if ( type === $.youtube.IMAGE || element.is("img") ) {
-                i = dim_data.length;
-                while ( i-- ) {
-                    config[dim_data[i]] = config[dim_data[i]] || element.attr(dim_data[i]) || element[dim_data[i]]();
+        if ( ! this.validDims() ) {
+            jsonStr = attr(element, containers.data);
+
+            if (jsonStr) {
+                try {
+                    $.extend(config, $.parseJSON(jsonStr));
+                } catch(e) {
+                    return log("Invalid JSON in "+containers.data+"='"+jsonStr+"'");
                 }
             }
-            
-            if ( notValidDims() ) {
-                jsonStr = attr(element, containers.data);
-                
-                if (jsonStr) {
-                    try {
-                        $.extend(config, $.parseJSON(jsonStr));
-                    } catch(e) {
-                        log("Invalid JSON in "+containers.data+"='"+jsonStr+"'");
-                    }
-                }
-                if ( !jsonStr || notValidDims() ) {
-                    log(this);
-                    return log( ' no dimentions, returns' );
-                }
+            if ( ! this.validDims() ) {
+                return log( ' no dimentions, returns' );
             }
         }
         
-        config.name = config.name || attr(element, containers.name) || element.data("name") || "";
+        config.nodeName = element[0].nodeName;
         
         if ( ! (item = fn.call(this, config)) ) {
             return log("invalid object");
@@ -154,7 +131,7 @@ $.youtube.prototype = {
         // Sync attributes
         i = sync_attributes.length;
         while ( i-- ) {
-            if ( element[0][sync_attributes[i]] != null ) {
+            if ( element[0][sync_attributes[i]] ) {
                 item[sync_attributes[i]] = element[0][sync_attributes[i]];
             }
         }
@@ -168,7 +145,7 @@ $.youtube.prototype = {
         // Replace the element on a lower level
         element[0] = item;
         
-        for ( i in bind ) {
+        for ( i in $.youtube.bind ) {
             if ( $.isFunction($.youtube.bind[i]) ) {
                 element.bind(i, (function(fn, self) {
                         return function() {
@@ -189,10 +166,10 @@ $.youtube.prototype = {
     
     update: function(config) {
         for ( var key in config ) {
-            if ( $.isFunction(this.update[key]) && config[key] && config[key] != this.config[key] ) {
+            this.config[key] = config[key];
+            if ( $.isFunction(this.update[key]) && config[key] != this.config[key] ) {
                 this.update[key].call(this);
             }
-            this.config[key] = config[key];
         }
         return this;
     },
@@ -202,6 +179,14 @@ $.youtube.prototype = {
         $.data(elem[i], DATA_ID, this);
         elem[i] = this.element[0];
         return this;
+    },
+    
+    validDims: function() {
+        return this.config.height && this.config.width;
+    },
+    
+    isObject: function(){
+        return this.type === $.youtube.VIDEO && this.config.videoType === $.youtube.OBJECT;
     }
     
 };
@@ -213,16 +198,16 @@ $.extend($.youtube.prototype.update, {
             $.youtube.image.url(this.config);
 
         this.element[0].src = url;
-        if ( this.type === $.youtube.VIDEO && this.config.videoType === $.youtube.OBJECT ) {
+        if ( this.isObject() ) {
             this.element.find("param[name=movie]").val(url);
         }
     }
 });
 
-$.each(["width", "height"], function(i, name){
-    $.youtube.prototype.update[name] = function(){
+$.each(["width", "height"], function(i, name) {
+    $.youtube.prototype.update[name] = function() {
         this.element[name](this.config[name]);
-        if ( this.type === $.youtube.VIDEO && this.config.videoType === $.youtube.OBJECT ) {
+        if ( this.isObject() ) {
             this.element.find("embed")[name](this.config[name]);
         }
     };
@@ -240,7 +225,7 @@ $.extend($.youtube, {
     DATA_ID: DATA_ID,
 
     // Urls
-    url: 'http://www.youtube.com',
+    url: 'http://www.youtube.com/',
     img_url: "http://img.youtube.com/vi/",
     
     debug: enable_log,
@@ -259,7 +244,6 @@ $.extend($.youtube, {
                     return $.youtube.config[config];
                 }
             }
-            return $.youtube;
         }
         return  $.extend(!byRef, {}, $.youtube.config);
     },
@@ -279,11 +263,8 @@ $.extend($.youtube, {
             $.youtube.video.iframe(data, url) :
             $.youtube.video.object(data, url),
         
-        // Since the object element don't allow any 
-        // data to be stored on it, we need to create a dummie div
-        // to put the element in
-        o = doc.createElement("div");
-            
+        o = doc.createElement(rexceptnodes.test(data.nodeName) ? data.nodeName : (data.nodeName = "span"));
+        
         o.appendChild(e);
         
         e.width  = data.width;
@@ -308,7 +289,7 @@ $.extend($.youtube, {
     },
     
     is: function( e ) {
-        return (e = $.youtube.get(e)) && (e instanceof $.youtube) && $.youtube.validType(e.config.type);
+        return (e = $.youtube.get(e)) && (e instanceof $.youtube);
     },
     
     log: log,
@@ -335,8 +316,8 @@ $.extend($.youtube.video, {
         }
         url = url.replace(/&$/, "");
         return data.videoType === $.youtube.IFRAME ? 
-            $.youtube.url + '/embed/' + url : 
-            $.youtube.url + '/v/' + url + '?fs=1&amp;hl=en_US&amp;rel=0';
+            $.youtube.url + 'embed/' + url : 
+            $.youtube.url + 'v/' + url + '?fs=1&amp;hl=en_US&amp;rel=0';
     },
     
     iframe: function(data, url) {
@@ -351,8 +332,8 @@ $.extend($.youtube.video, {
     object: function(data, url) {
         var e = doc.createElement("object"), p;
 
-        $.each(["allowFullScreen", "allowscriptaccess", "movie"], function(i, name){
-            var p = doc.createElement("param");
+        $.each(["allowFullScreen", "allowscriptaccess", "movie"], function(i, name) {
+            p = doc.createElement("param");
             p.name = name;
             p.value = name !== "movie" ? "true" : url;
             e.appendChild(p);
@@ -380,7 +361,9 @@ $.extend($.youtube.config, {
     containers: {
         name: ["title", "name"],
         id:   ['href', "src"],
-        data: 'alt'
+        data: 'alt',
+        width: "width",
+        height: "height"
     }
 }, params);
 

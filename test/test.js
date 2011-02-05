@@ -62,7 +62,7 @@ test("$.youtube.get()", function(){
 });
 
 test("$.youtube.is()", function(){
-    expect(14);
+    expect(15);
     
     var c = setupConfig(),
     NOT = [
@@ -81,7 +81,8 @@ test("$.youtube.is()", function(){
         NaN
     ],
     OK = [
-        $("<div />").youtube(c)
+        $("<div />").youtube(c),
+        $("<div />").youtube(c)[0]
     ],
     
     i = OK.length;
@@ -279,7 +280,7 @@ test("Flexibility", function(){
     
     var c = $.youtube.config(), id = "t_hR5KNdPEA";
     
-    var e = $(".flexibility-video").children();
+    var e = $(".flexibility-video").hide().children();
     
     e.youtube(c);
     e.each(function(i){
@@ -344,12 +345,16 @@ test("Flexibility", function(){
                 equal(y.config.id, param, "check id");
                 break
             case 1:
+                equal(y.config.type, param, "check is video");
+                break
             case 2:
-                equal(y.config.type, param, ("check is " +( i == 1 ? "video" : "image")));
+                equal(y.config.type, param, "check is image");
                 break
             case 3:
+                equal(y.config.videoType, param, "check is object");
+                break
             case 4:
-                equal(y.config.videoType, param, ("check is " + (i == 3 ? "object" : "iframe")));
+                equal(y.config.videoType, param, "check is iframe");
                 break
         }
     });

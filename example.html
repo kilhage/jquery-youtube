@@ -146,53 +146,6 @@ $('#input').blur(function(){
  * &#60;center id="container"&#62;&#60;/center&#62;
  */
         </pre>
-        Try insert a youtube-id here: <input type="text" id="input">
-        <br>
-        <br>
-        
-        <center id="container"></center>
-
-        <script>
-          $('#input').blur(function(){
-            var html = $.youtube.element('.element', $('#input').val());
-
-            $('#container').html(html);
-
-            $('.element').youtube('video', {
-              autoplay: true,
-              width:    '300',
-              height:   '250'
-            });
-          });
-        </script>
-
-      </div>
-
-      <div class="div">
-        <h3>
-          Code:
-        </h3>
-        <pre name="code" class="jscript">
-//Javascript:
-$('#input').blur(function(){
-  var html = $.youtube.element('#element', $('#input').val());
-
-  $('#container').html(html);
-
-  $('#element').youtube('video', {
-    autoplay: true,
-    width:    '300',
-    height:   '250'
-  });
-});
-
-/*
- * Html:
- * &#60;input type="text" id="input"&#62;
- *
- * &#60;center id="container"&#62;&#60;/center&#62;
- */
-        </pre>
         Try insert a youtube-id here: <input type="text" id="input2">
         <br>
         <br>

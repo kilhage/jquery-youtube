@@ -22,7 +22,7 @@
     
     
     <!--- Dummie elements -->
-    <div style="display:none">
+    <div>
         <div class="flexibility-video">
             <a class="hasId" id="flexibility-video0" data-id="t_hR5KNdPEA" data-width="200" data-height="80"></a>
             <a href="t_hR5KNdPEA" data-width="200" data-height="80"></a>
